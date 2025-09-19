@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Digital Health Plus - Database Connection Test</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong>
+            <ol>
+                <li>Enter your Supabase project URL and anon key below</li>
+                <li>Click "Test Connection" to verify your database setup</li>
+                <li>If successful, copy the credentials to your .env file</li>
+            </ol>
+        </div>
+
+        <div class="form-group">
+            <label for="supabaseUrl">Supabase Project URL:</label>
+            <input type="text" id="supabaseUrl" placeholder="https://your-project-id.supabase.co">
+        </div>
+
+        <div class="form-group">
+            <label for="supabaseKey">Supabase Anon Key:</label>
+            <input type="text" id="supabaseKey" placeholder="your-anon-key-here">
+        </div>
+
+        <button onclick="testConnection()">🔍 Test Connection</button>
+        <button onclick="testHospitals()">🏥 Test Hospital Data</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+
+        <div id="results"></div>
+
+        <div class="info" style="margin-top: 30px;">
+            <h3>📋 Setup Checklist:</h3>
+            <ul>
+                <li>✅ Create Supabase project at <a href="https://supabase.com" target="_blank">supabase.com</a></li>
+                <li>✅ Copy project URL and anon key from Settings → API</li>
+                <li>✅ Run the SQL script from <code>quick-database-setup.sql</code> in Supabase SQL Editor</li>
+                <li>✅ Update your <code>.env</code> file with the correct credentials</li>
+                <li>✅ Restart your development server (<code>npm run dev</code>)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        let supabase = null;
+
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testConnection() {
+            clearResults();
+            
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
+
+            if (!url || !key) {
+                showResult('❌ Please enter both Supabase URL and anon key', 'error');
+                return;
+            }
+
+            try {
+                // Initialize Supabase client
+                supabase = window.supabase.createClient(url, key);
+                
+                showResult('🔄 Testing connection...', 'info');
+
+                // Test basic connection
+                const { data, error } = await supabase
+                    .from('hospitals')
+                    .select('count')
+                    .limit(1);
+
+                if (error) {
+                    throw error;
+                }
+
+                showResult('✅ Database connection successful!', 'success');
+                showResult(`📊 Connection established to: ${url}`, 'success');
+                
+                // Show .env format
+                showResult(`
+                    <strong>📝 Copy these to your .env file:</strong>
+                    <pre>VITE_SUPABASE_URL=${url}
+VITE_SUPABASE_ANON_KEY=${key}</pre>
+                `, 'info');
+
+            } catch (error) {
+                showResult(`❌ Connection failed: ${error.message}`, 'error');
+                
+                if (error.message.includes('relation "hospitals" does not exist')) {
+                    showResult('🔧 Database tables not found. Please run the SQL script from quick-database-setup.sql in your Supabase SQL Editor.', 'error');
+                }
+            }
+        }
+
+        async function testHospitals() {
+            if (!supabase) {
+                showResult('❌ Please test connection first', 'error');
+                return;
+            }
+
+            try {
+                showResult('🔄 Testing hospital data...', 'info');
+
+                const { data, error } = await supabase
+                    .from('hospitals')
+                    .select('*')
+                    .limit(5);
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data && data.length > 0) {
+                    showResult(`✅ Found ${data.length} hospitals in database`, 'success');
+                    showResult(`
+                        <strong>🏥 Sample hospitals:</strong>
+                        <pre>${JSON.stringify(data.map(h => ({ name: h.name, city: h.city })), null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    showResult('⚠️ No hospital data found. The database tables exist but are empty.', 'error');
+                }
+
+            } catch (error) {
+                showResult(`❌ Hospital data test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-fill from localStorage if available
+        window.onload = function() {
+            const savedUrl = localStorage.getItem('test_supabase_url');
+            const savedKey = localStorage.getItem('test_supabase_key');
+            
+            if (savedUrl) document.getElementById('supabaseUrl').value = savedUrl;
+            if (savedKey) document.getElementById('supabaseKey').value = savedKey;
+        };
+
+        // Save to localStorage on input
+        document.getElementById('supabaseUrl').addEventListener('input', function(e) {
+            localStorage.setItem('test_supabase_url', e.target.value);
+        });
+
+        document.getElementById('supabaseKey').addEventListener('input', function(e) {
+            localStorage.setItem('test_supabase_key', e.target.value);
+        });
+    </script>
+</body>
+</html>

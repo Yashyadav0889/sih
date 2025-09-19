@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login - Digital Health Plus</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .credentials {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Digital Health Plus - Login Test</h1>
+        
+        <div class="info">
+            <strong>Test the predefined user accounts:</strong>
+            <p>This tool will test if your predefined user accounts are working correctly.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="userType">Select User Type:</label>
+            <select id="userType" onchange="updateCredentials()">
+                <option value="">-- Select User Type --</option>
+                <option value="doctor">Doctor</option>
+                <option value="admin">Administrator</option>
+                <option value="government">Government Official</option>
+                <option value="company">Company</option>
+            </select>
+        </div>
+
+        <div id="credentialsDisplay"></div>
+
+        <button onclick="testLogin()" id="testBtn" disabled>🔍 Test Login</button>
+        <button onclick="clearResults()">🗑️ Clear Results</button>
+
+        <div id="results"></div>
+
+        <div class="info" style="margin-top: 30px;">
+            <h3>📋 Predefined Accounts:</h3>
+            <div class="credentials">
+                <strong>Doctor:</strong><br>
+                User ID: WHNYJ64469870<br>
+                Email: doctor@healthplus.kerala.gov.in<br>
+                Password: Yash+-07@
+            </div>
+            <div class="credentials">
+                <strong>Administrator:</strong><br>
+                User ID: ADMIN64469870<br>
+                Email: admin@healthplus.kerala.gov.in<br>
+                Password: Yash+-07@
+            </div>
+            <div class="credentials">
+                <strong>Government Official:</strong><br>
+                User ID: GOVT64469870<br>
+                Email: official@healthplus.kerala.gov.in<br>
+                Password: Yash+-07@
+            </div>
+            <div class="credentials">
+                <strong>Company:</strong><br>
+                User ID: COMP64469870<br>
+                Email: company@healthplus.kerala.gov.in<br>
+                Password: Yash+-07@
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://yhgydshrubjuxrxgogwk.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloZ3lkc2hydWJqdXhyeGdvZ3drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczNzgxMjcsImV4cCI6MjA3Mjk1NDEyN30.-WbbGfvF9zklUilcp0fRxuYDE2z4WJV8IRfJYyn1d4M';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const userCredentials = {
+            doctor: {
+                userId: 'WHNYJ64469870',
+                email: 'doctor@healthplus.kerala.gov.in',
+                password: 'Yash+-07@',
+                name: 'Dr. Rajesh Kumar'
+            },
+            admin: {
+                userId: 'ADMIN64469870',
+                email: 'admin@healthplus.kerala.gov.in',
+                password: 'Yash+-07@',
+                name: 'System Administrator'
+            },
+            government: {
+                userId: 'GOVT64469870',
+                email: 'official@healthplus.kerala.gov.in',
+                password: 'Yash+-07@',
+                name: 'Government Official'
+            },
+            company: {
+                userId: 'COMP64469870',
+                email: 'company@healthplus.kerala.gov.in',
+                password: 'Yash+-07@',
+                name: 'Company Representative'
+            }
+        };
+
+        function updateCredentials() {
+            const userType = document.getElementById('userType').value;
+            const credentialsDisplay = document.getElementById('credentialsDisplay');
+            const testBtn = document.getElementById('testBtn');
+            
+            if (userType && userCredentials[userType]) {
+                const creds = userCredentials[userType];
+                credentialsDisplay.innerHTML = `
+                    <div class="credentials">
+                        <strong>Testing ${userType.charAt(0).toUpperCase() + userType.slice(1)} Account:</strong><br>
+                        User ID: ${creds.userId}<br>
+                        Email: ${creds.email}<br>
+                        Password: ${creds.password}<br>
+                        Name: ${creds.name}
+                    </div>
+                `;
+                testBtn.disabled = false;
+            } else {
+                credentialsDisplay.innerHTML = '';
+                testBtn.disabled = true;
+            }
+        }
+
+        function showResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testLogin() {
+            clearResults();
+            
+            const userType = document.getElementById('userType').value;
+            if (!userType) {
+                showResult('❌ Please select a user type first', 'error');
+                return;
+            }
+
+            const creds = userCredentials[userType];
+            showResult(`🔄 Testing login for ${creds.name}...`, 'info');
+
+            try {
+                // Test login with email and password
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: creds.email,
+                    password: creds.password
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data.user) {
+                    showResult(`✅ Login successful for ${creds.name}!`, 'success');
+                    showResult(`📧 Email: ${data.user.email}`, 'success');
+                    showResult(`🆔 User ID: ${data.user.id}`, 'success');
+                    
+                    if (data.user.user_metadata) {
+                        showResult(`👤 Name: ${data.user.user_metadata.name || 'Not set'}`, 'success');
+                        showResult(`🏷️ Role: ${data.user.user_metadata.role || 'Not set'}`, 'success');
+                    }
+
+                    // Sign out after test
+                    await supabase.auth.signOut();
+                    showResult(`🔓 Signed out successfully`, 'info');
+                } else {
+                    showResult('❌ Login failed: No user data returned', 'error');
+                }
+
+            } catch (error) {
+                showResult(`❌ Login failed: ${error.message}`, 'error');
+                
+                if (error.message.includes('Invalid login credentials')) {
+                    showResult(`
+                        <strong>🔧 Fix Required:</strong><br>
+                        The user account doesn't exist in Supabase Auth. Please:<br>
+                        1. Go to your Supabase dashboard<br>
+                        2. Navigate to Authentication → Users<br>
+                        3. Click "Add User"<br>
+                        4. Create account with email: ${creds.email}<br>
+                        5. Set password: ${creds.password}<br>
+                        6. Check "Email Confirm"<br>
+                        7. Add user metadata with name and role
+                    `, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
